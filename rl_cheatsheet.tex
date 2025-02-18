@@ -114,29 +114,38 @@ $\mathbb{E}[X | Y = y_j] = \sum_{z_k} Pr\{Z=z_k | Y = y_j\} \cdot \mathbb{E}[X|Y
 \end{center}
 The Agent at each step $t$ receives a representation of the environment's \emph{state} $S_t \in \mathcal{S}$ and it selects an action $A_t \in \mathcal{A}(s)$. One time step later, as a consequence of its action, the agent receives a \emph{reward}, $R_{t + 1} \in \mathcal{R} \subseteq \mathbb{R}$ and goes to the new state $S_{t+1}$.
 
+\subsection{Multi-Armed Bandits}
+
 \subsection{Markov Decision Process}
-A finite \textbf{Markov Decision Process}, MDP, is defined by:	\\
-finite set of states:  $s \in \mathcal{S}$, \\
-finite set of actions: $a \in \mathcal{A}$ \\
-dynamics: 
+A finite \textbf{Markov Decision Process}, MDP, is defined by:
+\begin{enumerate}
+    \item finite set of states:  $s \in \mathcal{S}$,
+    \item finite set of actions: $a \in \mathcal{A}$
+    \item dynamics:
 \begin{equation}
 p(s', r | s, a) \stackrel{.}{=} Pr \{S_{t} = s', R_{t} = r | S_{t-1} = s, A_{t-1} = a \} \quad [3.2] \numberthis
 \end{equation}
-state transition probabilities: 
+    \item state transition probabilities: 
 \begin{align*}
 p(s' | s, a) & \stackrel{.}{=} Pr \{S_{t} = s' | S_{t-1} = s, A_{t-1} = a \} \\
 & = \sum_{r \in \mathcal{R}} p(s', r | s, a) \quad [3.4]  \numberthis
 \end{align*}
-expected reward for state-action:
+    \item expected reward for state-action:
 \begin{align*}
 r(s, a) & \stackrel{.}{=} \mathbb{E}[ R_{t} | S_{t-1} = s, A_{t-1} = a ] \\
  & = \sum_{r \in \mathcal{R}} r \cdot \sum_{s' \in \mathcal{S}} p(s', r | s, a) \quad [3.5]  \numberthis
 \end{align*}
-expected reward for state-action-next state: 
+    \item expected reward for state-action-next state: 
 \begin{align*}
 r(s',s, a) & \stackrel{.}{=} \mathbb{E}[ R_{t} | S_{t-1} = s, A_{t-1} = a, S_{t} = s' ] \\
 & = \sum_{r \in \mathcal{R}} r \cdot \frac{p(s', r | s, a)}{p(s' | s,a)} \quad [3.6] \numberthis
 \end{align*}
+\end{enumerate}
+
+
+
+
+
 
 The MDP and agent together thereby give rise to a sequence or \emph{trajectory} that begins like this:
 $S_0,A_0,R_1,S_1,A_1,R_2,S_2,A_2,R_3...$
@@ -146,13 +155,16 @@ In RL the goal of the agent is not the maximization of the immediate reward, but
 \begin{equation}
 G_t \stackrel{.}{=} R_{t+1} + R_{t+2} + R_{t+3} + ... +  R_{T} \numberthis \label{eq:return_1} \quad [3.7]
 \end{equation}
-where $T$ is a final time step.
-When there is a natural notion of final time step ($T$), the agent-environment interaction breaks naturally into sub-sequences (\emph{episodes}) and the next episode begins independently of how the previous one ended. Tasks with episodes are called \emph{episodic tasks}. Each episodes ends in a special state called \emph{terminal state} with different rewards for the different outcomes.  $\mathcal{S}^{+}$ is the set of all states plus the terminal state.
+where $T$ is a final time step. \\
+
+When there is a natural notion of final time step ($T$), the agent-environment interaction breaks naturally into sub-sequences (\emph{episodes}) and the next episode begins independently of how the previous one ended. Tasks with episodes are called \emph{episodic tasks}. \\
+
+Each episodes ends in a special state called \emph{terminal state} with different rewards for the different outcomes.  $\mathcal{S}^{+}$ is the set of all states plus the terminal state.
 
 When the agent-environment interaction does not break naturally into episodes but goes on continually without limit, we call these \emph{continuing tasks}.
 The previous formulation of return (Eq. \ref{eq:return_1}) is problematic because $T=\infty$. 
 
-It is introduced the \emph{total discounted return} expressed as the sum of rewards (opportunely discounted using the \emph{discount rate} $0 \le \gamma \le 1$):
+The \emph{total discounted return} expressed as the sum of rewards (opportunely discounted using the \emph{discount rate} $0 \le \gamma \le 1$):
 \begin{align*}
 G_t & \stackrel{.}{=} R_{t+1} + \gamma R_{t+2} + \gamma^2 R_{t+3} + ...\\
 & = \sum_{k = 0}^\infty \gamma^k R_{t + k + 1} \numberthis \label{eq:discounted_return_1} \quad [3.8]\\
@@ -175,8 +187,8 @@ A \emph{policy} is a mapping from a state to probabilities of selecting each pos
 That is the probability of select an action $A_t = a$ if $S_t = s$.
 
 \subsection{Value Functions}
-\emph{State-Value function} describes \emph{how good} is to be in a specific state $s$ under a certain policy $\pi$.
-Informally, it is the expected return (expected cumulative discounted reward) when starting from $s$ and following $\pi$. For any policy $\pi$ and $\forall s \in \mathcal{S}$:
+\emph{State-Value function} describes \emph{how good} it is to be in a specific state $s$ under a certain policy $\pi$.
+It is the expected return (expected cumulative discounted reward) when starting from $s$ and following $\pi$. For any policy $\pi$ and $\forall s \in \mathcal{S}$:
 \begin{align*}
 v_{\pi}(s) & \stackrel{.}{=} \mathbb{E}_{\pi}[G_t | S_t = s] \numberthis \label{eq:v_def} \quad [3.12] \\
 & = \mathbb{E}_{\pi}[R_{t+1} + \gamma G_{t+1} | S_t = s] \numberthis  \quad [by \ 3.9] \\
@@ -184,8 +196,7 @@ v_{\pi}(s) & \stackrel{.}{=} \mathbb{E}_{\pi}[G_t | S_t = s] \numberthis \label{
 \end{align*}
 The last one is the \textbf{Bellman equation for $v_\pi$}.
 
-\emph{Action-Value function (Q-Function)} describes \emph{how good} is to perform a given action $a$ in a given state $s$ under a certain policy $\pi$. 
-Informally, is the expected return when starting from $s$, taking action $a$ and thereafter following $\pi$:
+\emph{Action-Value function (Q-Function)} describes \emph{how good} is to perform a given action $a$ in a given state $s$ under a certain policy $\pi$. It is the expected return when starting from $s$, taking action $a$ and thereafter following $\pi$:
 \begin{align*}
 q_{\pi}(s,a) & \stackrel{.}{=} \mathbb{E}_{\pi}[G_t | S_t = s, A_t = a]  \numberthis \label{eq:q_def}\quad [3.13] \\
 & = \sum_{s',r} p(s',r|s,a) \Big[r + \gamma \sum_{a'} \pi(a'|s') q_{\pi}(a',s') \Big]  \numberthis \label{eq:q_bellman}\quad [Ex \ 3.17]
@@ -237,6 +248,9 @@ q_{*}(s,a) & = \sum_{s',r} p(s',r|s,a) \Big[r + \gamma v_{*}(s') \Big]  \quad [E
 \section{Dynamic Programming}
 Collection of algorithms that can be used to compute optimal policies given a perfect model of the environment as a MDP. 
 
+\textbf{Prediction} estimating the value of states or state-action pairs given a fixed policy. \\
+\textbf{Control} Finding an optimal policy that maximises over cumulative rewards.
+
 \subsection{Policy Evaluation [Prediction]}
 If the environment's dynamic is completely known, the Eq. \ref{eq:v_bellman} is a system of $|\mathcal{S}|$ equations in  $|\mathcal{S}|$ unknowns ($v_\pi(s), s \in \mathcal{S}$). \\
 We also can use an iterative solution,  $\forall s \in \mathcal{S}$:
@@ -246,26 +260,26 @@ v_{k+1}(s) & \stackrel{.}{=} \mathbb{E}_{\pi}[R_{t+1} + \gamma v_{k}(S_{t+1}) | 
 \end{align*}
 We can compute new values $v_{k+1}(s)$ from old values $v_k(s)$ without change old values or update the values \emph{in-place}.
 
-\subsubsection{Iterative Policy Evaluation for estimating $V \sim v_{\pi}$ (in-place version)}
-\begin{algorithm}[H]
-Inputs: $\pi$ - the policy to be evaluated \\
-Params: $\theta$ - a small positive threshold determining the accuracy of the estimation \\
-Initialize V(s), for all $s \in \mathcal{S}^{+}$ arbitrarily, except V(terminal) = 0\\
- $\Delta \leftarrow 0$ \\
- \While{$\Delta \ge \theta$}
- {
-  \ForEach{$s \in S$} {
-        $v \leftarrow V(s)$\\
-        $V(s) \leftarrow \sum\limits_a \pi(a|s) \sum\limits_{s', r} p(s',r | s, a) \begin{bmatrix}
-                r + \gamma V(s')
-        \end{bmatrix}$ \\
-        $\Delta \leftarrow \max(\Delta, | v - V(s)|)$
-        }
-}
-\caption{Iterative Policy Evaluation - estimating $V \sim v_{\pi}$ - [§4.1]}
-\end{algorithm}
+% \subsubsection{Iterative Policy Evaluation for estimating $V \sim v_{\pi}$ (in-place version)}
+% \begin{algorithm}[H]
+% Inputs: $\pi$ - the policy to be evaluated \\
+% Params: $\theta$ - a small positive threshold determining the accuracy of the estimation \\
+% Initialize V(s), for all $s \in \mathcal{S}^{+}$ arbitrarily, except V(terminal) = 0\\
+%  $\Delta \leftarrow 0$ \\
+%  \While{$\Delta \ge \theta$}
+%  {
+%   \ForEach{$s \in S$} {
+%         $v \leftarrow V(s)$\\
+%         $V(s) \leftarrow \sum\limits_a \pi(a|s) \sum\limits_{s', r} p(s',r | s, a) \begin{bmatrix}
+%                 r + \gamma V(s')
+%         \end{bmatrix}$ \\
+%         $\Delta \leftarrow \max(\Delta, | v - V(s)|)$
+%         }
+% }
+% \caption{Iterative Policy Evaluation - estimating $V \sim v_{\pi}$ - [§4.1]}
+% \end{algorithm}
 
-The algorithm tests the quantity $\max_{s \in \mathcal{S}} |v_{k+1}(s) - v_k(s)|$ after each \emph{sweep} and stops when it is sufficiently small ($\Delta < \theta$).
+% The algorithm tests the quantity $\max_{s \in \mathcal{S}} |v_{k+1}(s) - v_k(s)|$ after each \emph{sweep} and stops when it is sufficiently small ($\Delta < \theta$).
 %\vfill\null
 %\columnbreak
 
@@ -343,20 +357,19 @@ Initialize V(s), for all $s \in \mathcal{S}^{+}$ arbitrarily, except V(terminal)
 One \emph{sweep} is one update of each state.\\
 In value iteration only a single iteration of policy evaluation is performed between each policy improvement. 
 Value iteration combines, in each of its sweeps, one sweep of policy evaluation and one sweep of policy improvement.\\ Faster convergence is often achieved by interposing multiple policy evaluation sweeps between each policy improvement sweep.
-The entire class of \emph{truncated policy iteration} algorithms can be thought of as sequences of sweeps, some of which use policy evaluation updates and some of which use value iteration updates.
 
 \subsection{Generalized Policy Iteration}
 Generalized Policy Iteration is a way to refer to the general idea of letting policy-evaluation and policy-improvement processes interact, independent of the granularity and other details of the two processes. \\
 Almost all reinforcement learning methods are well described as GPI. That is, all have identifiable policies and value functions, with the policy always being improved with respect to the value function and the value function always being driven toward the value function for the policy, as suggested by the diagram below [§4.6]:
 \begin{center}
-\includegraphics[width=0.6\linewidth]{./images/GPI.png}
+\includegraphics[width=0.5\linewidth]{./images/GPI.png}
 \end{center}
 
-\end{multicols}
+% \end{multicols}
 
-\newpage
+% \newpage
 
-\begin{multicols}{3}
+% \begin{multicols}{3}
 
 \section{Monte Carlo Methods}
 Monte Carlo (MC) methods require only experience from actual or simulated environment.
@@ -388,8 +401,9 @@ The every-visit MC Prediction is derived from first-visit version removing the `
 In other words we move backward from the step $T$ and compute the $G$ incrementally and associate the values of $G$ to the current state and perform the average.
 
 \subsection{MC Estimation of Action Values}
-To determine a policy, if a model is not available, the state value is not sufficient and we have to estimate the values of state–action pairs.\\
-The MC methods are essentially the same as just presented for state values, but now we have state–action pairs.\\
+To determine a policy, if a model is not available, the state value is not sufficient and we have to estimate the values of state–action pairs. \\
+
+
 The only complication is that many state–action pairs may never be visited.  We need to estimate the value of all the actions from each state, not just the one we currently favor. 
 We can specify that the episodes start in a state–action pair, and that every pair has a nonzero probability of being selected as the start (assumption of \emph{exploring starts}). \\
 
@@ -418,10 +432,12 @@ We can specify that the episodes start in a state–action pair, and that every 
 \caption{First-visit Monte Carlo (Exploring Starts) - estimating $\pi \sim \pi_*$ [§5.3]}
 \end{algorithm}
 
-To remove the exploring starts assumption, we can use an $\epsilon-$soft policy. Most of times it selects the greedy policy but with probability $\epsilon$ it instead selects an action at random.\\
+To remove the exploring starts assumption, we can use an $\epsilon-$soft policy. Most of times it selects the greedy policy but with probability $\epsilon$ it instead selects an action at random. \\
+
 Other approaches are the \emph{off-policy} methods that learn about the optimal policy while behaving according to a different exploratory policy.
-The policy being learned about is called the \emph{target policy}, $\pi$, and the policy used to generate behavior is called the \emph{behavior policy}, $b$ (usually an exploratory policy, e.g. random policy).\\
-In order to use episodes from $b$ to estimate values for $\pi$, we require that every action taken under $\pi$ is also taken, at least occasionally, under $b$. That is, we require that $\pi(a|s) > 0$ implies $b(a|s) > 0$. This is called the \emph{assumption of coverage}.
+The policy being learned about is called the \emph{target policy}, $\pi$, and the policy used to generate behaviour is called the \emph{behaviour policy}, $b$ (usually an exploratory policy, e.g. random policy). \\
+
+\textbf{Assumption of Coverage} In order to use episodes from $b$ to estimate values for $\pi$, we require that every action taken under $\pi$ is also taken, at least occasionally, under $b$. That is, we require that $\pi(a|s) > 0$ implies $b(a|s) > 0$.
 
 \subsection{Off-policy Every-visit MC Prediction}
 \begin{algorithm}[H]
@@ -441,8 +457,10 @@ $\text{Return(s)} \leftarrow \text{an empty list}$ for all $s \in \mathcal{S}$ \
 	$W \leftarrow W \frac{\pi(A_t|S_t)}{b(A_t|S_t)}$
     }
  }
-\caption{Off-policy Every-visit Monte Carlo prediction - estimating $V \sim v_{\pi}$ [Course2-Week2]}
+\caption{Off-policy Every-visit Monte Carlo prediction - estimating $V \sim v_{\pi}$}
 \end{algorithm}
+
+\subsubsection{Importance Sampling Ratio}
 
 \subsection{Incremental Implementation}
 The average used to compute $V(S_t)$, can be performed incrementally:
@@ -451,7 +469,7 @@ V_n(S_t) = \frac{1}{n} \sum_{i=1}^{n} G_i(t) = V_{n-1}(S_t) + \frac{1}{n} (G_n(t
 \end{align*}
 
 \subsection{Off-policy MC Control}
-The policy used to generate behavior, called the behavior policy, may in fact be unrelated to the policy that is evaluated and improved, called the target policy. An advantage of this separation is that the target policy may be deterministic (e.g., greedy), while the behavior policy can continue to sample all possible actions.
+An advantage of the separation of the target and behaviour policy is that the target policy may be deterministic (e.g., greedy), while the behaviour policy can continue to sample all possible actions.
 \begin{algorithm}[H]
 Initialize:for all $s \in \mathcal{S}$, $a \in \mathcal{A}(s)$ \\
 	$Q(s, a) \in \mathbb{R}$ 
@@ -460,7 +478,7 @@ Initialize:for all $s \in \mathcal{S}$, $a \in \mathcal{A}(s)$ \\
 
 \While{forever - for each episode}
 {
-	$b \leftarrow any soft policy$
+	$b \leftarrow \text{any soft policy}$
     	Generate an episode following $b$: $S_0, A_0, R_1, S_1, A_1,..., S_{T-1}, A_{T-1}, R_T$\\
     	$G \leftarrow$ 0 \\
     	$W \leftarrow$ 1 \\
@@ -480,11 +498,11 @@ Initialize:for all $s \in \mathcal{S}$, $a \in \mathcal{A}(s)$ \\
 \caption{Off-policy MC Control - estimating $\pi \sim \pi_*$ [§5.7]}
 \end{algorithm}
 
-\end{multicols}
+% \end{multicols}
 
-\newpage
+% \newpage
 
-\begin{multicols}{3}
+% \begin{multicols}{3}
 
 \section{Temporal-Difference Learning}
 
@@ -492,19 +510,19 @@ Initialize:for all $s \in \mathcal{S}$, $a \in \mathcal{A}(s)$ \\
 Starting from Eq. \ref{eq:incremental_mc}, we can consider a generic update rule of $V(S_t)$
 
 \begin{align*}
-V(S_t) \leftarrow V(S_t) + \alpha (G_t - V(S_t)) \label{eq:constant_alpha_mc}\numberthis \quad [6.1]
+V(S_t) \leftarrow V(S_t) + \alpha (\mathbf{G_t} - V(S_t)) \label{eq:constant_alpha_mc}\numberthis \quad [6.1]
 \end{align*}
 $\alpha$ is a constant step-size and we call previous method \emph{constant-$\alpha$ MC}.
 MC has to wait the end of an episode to determine the increment to $V(S_t)$. \\
 Differently from MC, TD updates the value at each step of the episode following the equation below:
 
 \begin{align*}
-V(S_t) \leftarrow V(S_t) + \alpha (R_{t+1} + \gamma V(S_{t+1}) - V(S_t)) \label{eq:td_0}\numberthis \quad [6.2]
+V(S_t) \leftarrow V(S_t) + \alpha (\mathbf{R_{t+1} + \gamma V(S_{t+1})} - V(S_t)) \label{eq:td_0}\numberthis \quad [6.2]
 \end{align*}
 
 \begin{algorithm}[H]
 Inputs: $\pi$ - the policy to be evaluated \\
-Params: step size $\alpha \in ]0,1]$ \\
+Params: step size $\alpha \in [0,1]$ \\
 Initialize: $V(s) \in \mathbb{R}$ for all $s \in \mathcal{S}^+$ except for V(terminal)=0 \\
 
 \ForEach{episode}
@@ -556,7 +574,7 @@ The update rule:
 \end{align*}
 
 \begin{algorithm}[H]
- Params: step size $\alpha \in ]0,1]$, small $\epsilon > 0$ \\
+ Params: step size $\alpha \in [0,1]$, $\epsilon > 0$ \\
  Initialize $Q(s,a)$ for all $s \in \mathcal{S}^+$ and $a \in \mathcal{A}(s)$, arbitrarily except that $Q(terminal-state, \cdot) = 0$\\
 \ForEach{episode}
 {
@@ -585,7 +603,7 @@ The update rule:
 \end{align*}
 
 \begin{algorithm}[H]
- Params: step size $\alpha \in ]0,1]$, small $\epsilon > 0$\\
+ Params: step size $\alpha \in [0,1]$, $\epsilon > 0$\\
  Initialize $Q(s,a)$ for all $s \in \mathcal{S}^+$ and $a \in \mathcal{A}(s)$, arbitrarily except that $Q(terminal-state, \cdot) = 0$\\
 \ForEach{episode}
 {
@@ -610,12 +628,12 @@ Similar to Q-Learning, the update rule of Expected Sarsa, takes the expected val
 \end{align*}
 
 The next action is sampled from $\pi$. However, the expectation over actions is computed independently of the action actually selected in the next state. 
-In fact, it is not necessary that $\pi$ is equal to the behavior policy. This means that Expected Sarsa, like Q-learning, can be used to learn off-policy without importance sampling. \\
+In fact, it is not necessary that $\pi$ is equal to the behaviour policy. This means that Expected Sarsa, like Q-learning, can be used to learn off-policy without importance sampling. \\
 If the target policy is greedy with respect to its action value estimates we obtain the Q-Learning. Hence Q-Learning is a special case of Expected Sarsa.
-\end{multicols}
+% \end{multicols}
 
-\newpage
-\begin{multicols}{3}
+% \newpage
+% \begin{multicols}{3}
 \section{\emph{n}-step Bootstrapping}
 
 \subsection{\emph{n}-step TD Prediction}
@@ -648,7 +666,7 @@ Planning methods use simulated experience generated by a model, learning methods
 Many ideas and algorithms can be transferred between planning and learning.
 
 \begin{algorithm}[H]
- Params: step size $\alpha \in ]0,1]$, small $\epsilon > 0$\\
+ Params: step size $\alpha \in [0,1]$, $\epsilon > 0$\\
  Initialize $Q(s,a)$ for all $s \in \mathcal{S}^+$ and $a in \mathcal{A}(s)$, arbitrarily except that $Q(terminal-state, \cdot) = 0$\\
 \ForEach{episode}
 {
@@ -704,7 +722,7 @@ If (e) and (f) were omitted, the remaining algorithm would be one-step tabular Q
 
 The agent responds instantly to the latest sensory information and yet always planning in the background. Also the model-learning process is in background. As new information is gained, the model is updated to better match reality. As the model changes, the ongoing planning process will gradually compute a different way of behaving to match the new model.\\
 
-Models may be incorrect for many reasons: environment is stochastic and only a limited number of samples have been observed, the model was learned using function approximation that has generalized imperfectly, the environment has changed and its new behavior has not yet been observed. 
+Models may be incorrect for many reasons: environment is stochastic and only a limited number of samples have been observed, the model was learned using function approximation that has generalized imperfectly, the environment has changed and its new behaviour has not yet been observed. 
 When the model is incorrect, the planning process is likely to compute a suboptimal policy. In some cases, the suboptimal policy computed by planning quickly leads to the discovery and correction of the modeling error. This happens when the model is optimistic, predicting greater reward or better state transition than are actually possible. It is more difficult to correct a model when the environment becomes better than it was before.\\
 In Figure below there are represented the relation among algorithms presented in the Course on Coursera [Course3-Week1].\\
 \begin{center}
