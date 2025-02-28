@@ -729,19 +729,17 @@ The real experience obtained with the interaction with the environment can be us
 (e) Model-learning\\
 (f) Planning\\
 
-\vfill\null
-\columnbreak
+% \vfill\null
+% \columnbreak
 
 If (e) and (f) were omitted, the remaining algorithm would be one-step tabular Q-learning.\\
 
 The agent responds instantly to the latest sensory information and yet always planning in the background. Also the model-learning process is in background. As new information is gained, the model is updated to better match reality. As the model changes, the ongoing planning process will gradually compute a different way of behaving to match the new model.\\
 
 Models may be incorrect for many reasons: environment is stochastic and only a limited number of samples have been observed, the model was learned using function approximation that has generalized imperfectly, the environment has changed and its new behaviour has not yet been observed. 
-When the model is incorrect, the planning process is likely to compute a suboptimal policy. In some cases, the suboptimal policy computed by planning quickly leads to the discovery and correction of the modeling error. This happens when the model is optimistic, predicting greater reward or better state transition than are actually possible. It is more difficult to correct a model when the environment becomes better than it was before.\\
-In Figure below there are represented the relation among algorithms presented in the Course on Coursera [Course3-Week1].\\
-\begin{center}
-\includegraphics[width=1\linewidth]{./images/Tabular_Value_Function.png}
-\end{center}
+When the model is incorrect, the planning process is likely to compute a suboptimal policy. In some cases, the suboptimal policy computed by planning quickly leads to the discovery and correction of the modeling error. This happens when the model is optimistic, predicting greater reward or better state transition than are actually possible. It is more difficult to correct a model when the environment becomes better than it was before.
+
+
 % \end{multicols}
 
 % \newpage
@@ -786,9 +784,37 @@ Initialize: $\mathbf{w} \in \mathbb{R}^d$ arbitrarily (e.g. $\mathbb{w} = 0$) \\
 \caption{Gradient MC - Estimating $v \sim v_{\pi}$ [§9.3]}
 \end{algorithm}
 
-\rule{0.3\linewidth}{0.25pt} \\
-\scriptsize
-\href{https://github.com/linker81/Reinforcement-Learning-CheatSheet}{https://github.com/linker81/Reinforcement-Learning-CheatSheet}
+% \rule{0.3\linewidth}{0.25pt} \\
+% \scriptsize
+% \href{https://github.com/linker81/Reinforcement-Learning-CheatSheet}{https://github.com/linker81/Reinforcement-Learning-CheatSheet}
+
+\section{Policy Gradients}
+\textbf{Softmax Policy} $$\pi(a|s, \theta) = \frac{e^{h(s,a,\theta)}}{\sum_{b \in \mathcal{A}}e^{h(s,b,\theta)}}$$ where $h(s,a,\theta) = \theta^\top x(s,a)$
+
+\textbf{Gaussian Policy} $$\pi(a|s, \theta) \sim \mathcal{N}(\mu(s, \theta), \sigma^2)$$ where $\my(s, \theta) = \theta^\top x(s)$
+
+\textbf{Policy Optimisation Problem} Given $\pi(a|s, \theta)$ and interaction with MDP $m$, find the optimal choice of $\theta$
+
+\textbf{Policy Gradient Theorem} For any differentiable policy $\pi$, the policy gradient is $$\nabla J(\theta) = \sum_s d_\pi (s) \sum_a q_\pi (s,a) \nabla \pi(a|s, \theta)$$ where $d_\pi(s)$ is the on-policy distribution under $\pi$. \\
+
+\textbf{Episodic Tasks}: start-state value $d_\pi (s) = \sum_{t=0}^\infty \gamma^t Pr\{S_t = s | s_0, \pi\}$
+\textbf{Continuous Tasks}: average reward $d_\pi (s) = \lim_{t \rightarrow \infty} Pr\{S_t = s | \pi\}$
+
+$\nabla J(\theta) = \mathbb{E}_\pi [q_\pi(S_t, A_t) \frac{\nabla \pi(A_t | S_t, \theta)}{\pi (A_t | S_t, \theta)} = \mathbb{E}_\pi [q_\pi(S_t, A_t) \ln \nabla \pi(A_t | S_t, \theta)$
+
+\textbf{Without Baseline} $\theta_{t+1} = \theta_t + \alpha(q_\pi(S_t, A_t) \nabla \ln \pi(A_t | S_t, \theta_t))$ \\
+\textbf{With Baseline} $\theta_{t+1} = \theta_t + \alpha[(q_\pi(S_t, A_t) - b(S_t)) \nabla \ln \pi(A_t | S_t, \theta_t)]$ where, typically $b(S_t) = \hat{v}(S_t)$
+
+\textbf{REINFORCE} $q_\pi(S_t, A_t) = \mathbb{E}_\pi [G_t | S_t, A_t]$ \\
+
+\textbf{Actor-Critic Methods} $q_\pi(S_t, A_t) \approx R_{t+1} + \gamma \hat{v}(S_{t+1}, w) - (S_{t}, w)$
+
+
+$$\nabla \ln \pi(A_t | S_t, \theta_t) = \begin{cases}& x(s,a) - \sum_{a'} \pi(a' | s, \theta) x(s, a') \text{ if softmax policy } \\ & (a - \mu(s, \theta)) x(s)/\sigma^2 \text{ if Gaussian policy }\end{cases}$$
+
+\begin{center}
+\includegraphics[angle=90,width=1\linewidth]{./images/Tabular_Value_Function.png}
+\end{center}
 \end{multicols}
 
 \end{document}
