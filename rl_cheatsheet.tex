@@ -713,12 +713,12 @@ Within a planning agent, there are at least two roles for real experience: \\
 (1) it can be used to improve the model (to match more accurately the real environment), \emph{model learning},\\ 
 (2) it can be used to directly improve the value function and policy using the kinds reinforcement learning methods discussed before, \emph{direct RL} [§8.2].\\
 \begin{center}
-\includegraphics[width=0.6\linewidth]{./images/Planning-Learning.png}
+\includegraphics[width=0.55\linewidth]{./images/Planning-Learning.png}
 \end{center}
 The experience can improve value functions and policies either directly or indirectly via the model (\emph{indirect RL}).
 The real experience obtained with the interaction with the environment can be used to improve directly the Policy/value function (direct RL) or indirectly through the model learning and the planning that use simulated experience (\emph{indirect RL}) [§8.2].\\
 \begin{center}
-\includegraphics[width=0.8\linewidth]{./images/Dyna.png}
+\includegraphics[width=0.7\linewidth]{./images/Dyna.png}
 \end{center}
 
 \begin{algorithm}[H]
@@ -753,7 +753,7 @@ If (e) and (f) were omitted, the remaining algorithm would be one-step tabular Q
 The agent responds instantly to the latest sensory information and yet always planning in the background. Also the model-learning process is in background. As new information is gained, the model is updated to better match reality. As the model changes, the ongoing planning process will gradually compute a different way of behaving to match the new model.\\
 
 Models may be incorrect for many reasons: environment is stochastic and only a limited number of samples have been observed, the model was learned using function approximation that has generalized imperfectly, the environment has changed and its new behaviour has not yet been observed. 
-When the model is incorrect, the planning process is likely to compute a suboptimal policy. In some cases, the suboptimal policy computed by planning quickly leads to the discovery and correction of the modeling error. This happens when the model is optimistic, predicting greater reward or better state transition than are actually possible. It is more difficult to correct a model when the environment becomes better than it was before.
+When the model is incorrect, the planning process is likely to compute a suboptimal policy. In some cases, the suboptimal policy computed by planning quickly leads to the discovery and correction of the modelling error. This happens when the model is optimistic, predicting greater reward or better state transition than are actually possible. It is more difficult to correct a model when the environment becomes better than it was before.
 
 
 % \end{multicols}
@@ -763,26 +763,44 @@ When the model is incorrect, the planning process is likely to compute a subopti
 % \begin{multicols}{3}
 
 \section{On-policy Prediction with Function Approximation}
-We can approximate value function not as a table but as a parametrized functional form: $\hat{v}(s,\mathbf{w}) \sim v_{\pi}(s)$ where $\mathbf{w} \in \mathbb{R}^d$ and the number of weights is much less than the number of states ($d << |\mathcal{S}|$).
+We can approximate value function as a parametrized functional form: $\hat{v}(s,\mathbf{w}) \sim v_{\pi}(s)$ where $\mathbf{w} \in \mathbb{R}^d$ and the number of weights is much less than the number of states ($d << |\mathcal{S}|$).
 The value estimation can be framed as a Supervised Learning problem.\\
-The Monte Carlo methods estimate the value function using samples of the return so the input is the state and the targets are the returns (pairs $(S_i, G_i)$). \\
-For TD methods the targets are the one-step bootstrap return (pairs $(S_i, R_{i+1} + \gamma \hat{v}(S_{i+1}, \mathbf{w})$).\\
-In RL setting, the data is temporally correlated and the full dataset is not fixed and available from the beginning. Moreover, due to the bootstrapping methods (TD, DP), the target labels change.\\
-In tabular case the learned values at each state were decoupled -  an update at one state affected no other.
-Now making one state's estimate more accurate means making others' less accurate.
 
-\begin{equation}
-    \overline{VE}(\mathbf{w})  \stackrel{.}{=} \sum_{s \in \mathcal{S})} \mu(s) \left [ v_{\pi}(s) - \hat{v}(s, \mathbf{w}) \right ]^2 \label{eq:value_error} \numberthis \quad [9.1]  
-\end{equation}
-where $\mu(s)$ is a state distribution ($\mu(s) \ge 0$ and $\sum_s \mu(s) = 1$) representing how much we care about the error in each state $s$.
-Usually to minimize the \ref{eq:value_error} it is used the Stochastic Gradient Descent (SGD):
+State-Return Estimates $(S_t, U_t)$:
+\begin{itemize}
+    \item MC: $U_t = G_t$
+    \item $TD(0)$: $U_t = R_{t+1} + \gamma \hat{v}(S_{t+1}, w_t)$
+    \item $TD(n)$: $U_t = \sum_{k=1}^n \gamma^{k-1} R_{t+k} + \gamma^n V_{t+n-1}(S_{t+1}, w_{t+n-1})$
+    \item Sarsa: $U_t = R_{t+1} + \gamma \hat{q}(S_{t+1}, A_{t+1}, w_t$
+    \item Expected Sarsa: $U_t = R_{t+1} + \gamma \sum_a \pi(a|S_{t+1}) \hat{q}(S_{t+1}, a, w_t$
+    \item Q-learning: $U_t = R_{t+1} + \gamma \max_a \hat{q}(S_{t+1}, a, w_t)$
+\end{itemize}
+
+In RL setting, the data is temporally correlated and the full dataset is not fixed and available from the beginning. Moreover, due to the bootstrapping methods (TD, DP), the target labels change.
+
+\subsection{Gradient Descent}
+Let $J(w) = \mathbb{E}_\pi[(v_\pi(s) - \hat{v}(s,w))^2]$ be a differentiable function of $w$. Convergence requires standard $\alpha$-reduction.
+
+$$w_{t+1} = w_t + \frac{1}{2} \alpha \nabla J(w_t)$$
+
+\subsubsection{Gradient Bandit Algorithm}
+Let $\pi_t(a|\theta) = Pr\{A_t = a|\theta_t = \theta\}$ be a differentiable policy. We use gradient ascent to maximise the expected reward $$\theta_{t+1} = \theta_t + \alpha \nabla_{\theta_t} \mathbb{E}[R_t]$$
+
+\textbf{Example: Gradient Bandit Algorithm with Softmax}
+
+$H_t(a)$ denotes preference values for actions.
 
 \begin{align*}
-    \mathbf{w}_{t+1} & \stackrel{.}{=} \mathbf{w}_{t} - \frac{1}{2} \alpha \nabla \left [ v_{\pi}(S_t) - \hat{v}(S_t, \mathbf{w}_t) \right ]^2 \numberthis \quad [9.4]\\
-& = \mathbf{w}_{t} - \alpha \left [ v_{\pi}(S_t) - \hat{v}(S_t, \mathbf{w}_t) \right ] \nabla \hat{v}(S_t, \mathbf{w}_t) \numberthis \quad [9.5]
+    & \pi_t(a) = \frac{e^{H_t(a)}}{\sum_b e^{H_t(b)}} \\
+    & H_{t+1}(a) = H_t(a) + \alpha (R_t - \bar{R_t})([a=A_t]_1 - \pi_t(a)) \\ 
+    & \bar{R}_t = \frac{1}{t} \sum_{\tau=1}^t R_\tau = \bar{R}_{t-1} + \frac{1}{t}(R_t - \bar{R}_{t-1})
 \end{align*}
-Usually we have only an approximation $U_t$ of $v_{\pi}(S_t)$ but, if $U_t$ is an unbiased estimation of $v_{\pi}(S_t)$, that is $\mathbb{E}[U_t|S_t=s] = v_{\pi}(S_t)$, for each $t$, then $\mathbf{w}_t$ is guaranteed to converge to a local optimum (under the stochastic approximation condition for decreasing $\alpha$). \\
-For MC, $U_t \stackrel{.}{=} G_t$ and hence $U_t$ is an unbiased estimation of $v_{\pi}(S_t)$.
+
+\subsubsection{Stochastic Gradient Descent}
+$$w_{t+1} = w_t + \alpha[U_t - \hat{v}(S_t, w_t)] \nabla \hat{v}(S_t, w_t)$$
+
+where $\hat{v}(S_t, w_t) = x(s)$ under linear value function approximation.
+
 
 \begin{algorithm}[H]
 Inputs: $\pi$ - the policy to be evaluated \\
@@ -799,6 +817,39 @@ Initialize: $\mathbf{w} \in \mathbb{R}^d$ arbitrarily (e.g. $\mathbb{w} = 0$) \\
  }
 \caption{Gradient MC - Estimating $v \sim v_{\pi}$ [§9.3]}
 \end{algorithm}
+
+\begin{algorithm}[H]
+Input: a differentiable action-value function parametrisation $\hat{q}: \mathcal{S} \times \mathcal{A} \times \mathbb{R}^d \rightarrow \mathbb{R}$ \\
+Algorithm Parameters: step size $\alpha > 0$, small $\epsilon > 0$ \\
+Initialise value-function weights $\mathbf{w} \in \mathbb{R}^d$ arbitrarily (e.g. $\mathbf{w} = 0$ \\
+\While{for each episode}{
+$S,A \leftarrow$ initial state and action of episode (e.g. $\epsilon$-greedy)
+\ForEach{step of episode}{
+    Take action $A$, observe $R, S'$ \\
+    \If{$S'$ is terminal}{
+        $w \mathrel{+}= \alpha[R - \hat{q}(S,A,w)]\nabla \hat{q}(S,A,w)$ \\
+        Go to next episode
+    }
+    Choose $A'$ as function of $\hat{q}(S', \cdot, w)$ (e.g. $\epsilon$-greedy) \\
+    $w \mathrel{+}= \alpha[R - \gamma \hat{q}(S',A',w) - \hat{q}(S,A,w)]\nabla \hat{q}(S,A,w)$ \\
+    $S \leftarrow S'; A \leftarrow A'$
+}
+}
+\caption{Episodic Semi-gradient Sarsa}
+\end{algorithm}
+
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|c|c|c|c|}
+\hline
+Algorithm                                                                      & Tabular & Linear                                                      & \begin{tabular}[c]{@{}c@{}}Non\\ Linear\end{tabular} \\ \hline
+MC Control                                                                     & yes     & \begin{tabular}[c]{@{}c@{}}oscillates \\ near*\end{tabular} & no                                                   \\ \hline
+\begin{tabular}[c]{@{}c@{}}(semi-gradient)\\ n-step Sarsa\end{tabular}         & yes     & \begin{tabular}[c]{@{}c@{}}oscillates \\ near*\end{tabular} & no                                                   \\ \hline
+\begin{tabular}[c]{@{}c@{}}(semi-gradient)\\ n-step \\ Q-learning\end{tabular} & yes     & no                                                          & no                                                   \\ \hline
+\end{tabular}
+\caption{Convergence to Global Optimum in Episodic Control}
+\end{table}
 
 % \rule{0.3\linewidth}{0.25pt} \\
 % \scriptsize
