@@ -856,28 +856,76 @@ MC Control                                                                     &
 % \href{https://github.com/linker81/Reinforcement-Learning-CheatSheet}{https://github.com/linker81/Reinforcement-Learning-CheatSheet}
 
 \section{Policy Gradients}
-\textbf{Softmax Policy} $$\pi(a|s, \theta) = \frac{e^{h(s,a,\theta)}}{\sum_{b \in \mathcal{A}}e^{h(s,b,\theta)}}$$ where $h(s,a,\theta) = \theta^\top x(s,a)$
+\textbf{Softmax Policy} $$\pi(a|s, \theta) = \frac{e^{h(s,a,\theta)}}{\sum_{b \in \mathcal{A}}e^{h(s,b,\theta)}}, \quad h(s,a,\theta) = \theta^\top x(s,a)$$
 
-\textbf{Gaussian Policy} $$\pi(a|s, \theta) \sim \mathcal{N}(\mu(s, \theta), \sigma^2)$$ where $\my(s, \theta) = \theta^\top x(s)$
+\textbf{Gaussian Policy} $$\pi(a|s, \theta) \sim \mathcal{N}(\mu(s, \theta), \sigma^2), \quad \mu(s, \theta) = \theta^\top x(s)$$
 
 \textbf{Policy Optimisation Problem} Given $\pi(a|s, \theta)$ and interaction with MDP $m$, find the optimal choice of $\theta$
 
-\textbf{Policy Gradient Theorem} For any differentiable policy $\pi$, the policy gradient is $$\nabla J(\theta) = \sum_s d_\pi (s) \sum_a q_\pi (s,a) \nabla \pi(a|s, \theta)$$ where $d_\pi(s)$ is the on-policy distribution under $\pi$. \\
+\textbf{Policy Gradient Theorem} For any differentiable policy $\pi$, the policy gradient is $$\nabla J(\theta) = \sum_s d_\pi (s) \sum_a q_\pi (s,a) \nabla \pi(a|s, \theta)$$ where $d_\pi(s)$ is the on-policy distribution under $\pi$. 
+
+\begin{algorithm}[H]
+Initialise $\theta_0$
+\For{t = 0, 1, ...}{
+    collect data using $\pi_{\theta_t}$ \\
+    $\theta_{t+1} = \theta_t + \alpha \nabla J(\theta_t)$
+}
+\caption{Policy Gradient Updates}
+\end{algorithm}
 
 \textbf{Episodic Tasks}: start-state value $d_\pi (s) = \sum_{t=0}^\infty \gamma^t Pr\{S_t = s | s_0, \pi\}$
+
 \textbf{Continuous Tasks}: average reward $d_\pi (s) = \lim_{t \rightarrow \infty} Pr\{S_t = s | \pi\}$
+
+Both tasks do \textit{not} require derivative of environment dynamics $p(s', r|s,a)$
+
+$$\nabla \ln \pi(A_t | S_t, \theta_t) = \begin{cases}& x(s,a) - \sum_{a'} \pi(a' | s, \theta) x(s, a') \text{ if softmax policy } \\ & (a - \mu(s, \theta)) x(s)/\sigma^2 \text{ if Gaussian policy }\end{cases}$$
 
 $\nabla J(\theta) = \mathbb{E}_\pi [q_\pi(S_t, A_t) \frac{\nabla \pi(A_t | S_t, \theta)}{\pi (A_t | S_t, \theta)} = \mathbb{E}_\pi [q_\pi(S_t, A_t) \ln \nabla \pi(A_t | S_t, \theta)$
 
 \textbf{Without Baseline} $\theta_{t+1} = \theta_t + \alpha(q_\pi(S_t, A_t) \nabla \ln \pi(A_t | S_t, \theta_t))$ \\
-\textbf{With Baseline} $\theta_{t+1} = \theta_t + \alpha[(q_\pi(S_t, A_t) - b(S_t)) \nabla \ln \pi(A_t | S_t, \theta_t)]$ where, typically $b(S_t) = \hat{v}(S_t)$
+\textbf{With Baseline (reduce variance)} $\theta_{t+1} = \theta_t + \alpha[(q_\pi(S_t, A_t) - b(S_t)) \nabla \ln \pi(A_t | S_t, \theta_t)]$ where, typically $b(S_t) = \hat{v}(S_t)$
 
-\textbf{REINFORCE} $q_\pi(S_t, A_t) = \mathbb{E}_\pi [G_t | S_t, A_t]$ \\
+\textbf{REINFORCE} $q_\pi(S_t, A_t) = \mathbb{E}_\pi [G_t | S_t, A_t]$ 
 
-\textbf{Actor-Critic Methods} $q_\pi(S_t, A_t) \approx R_{t+1} + \gamma \hat{v}(S_{t+1}, w) - (S_{t}, w)$
+\begin{algorithm}[H]
+Input: a differentiable policy parametrisation $\pi(a|s,\theta)$ \\
+Parameter: step size $\alpha > 0$ \\
+Initialise policy parameter $\theta \in \mathbb{R}^{d'}$
+\While{forever (for each episode)}{
+Generate an episode $S_0, A_0, R_1, ..., S_{T-1}, A_{T-1}, R_T$, following $\pi(\cdot|\cdot, \theta)$
+\ForEach{step of episode $t= 0,1,...,T-1$}{
+    $G \leftarrow \sum_{k=t+1}^T \gamma^{k-t-1}R_k$ \\
+    $\theta \leftarrow \theta + \alpha \gamma^t G \nabla \ln \pi(A_t|S_t, \theta)$
+}
+}
+\caption{REINFORCE Algorithm}
+\end{algorithm}
+
+\textbf{Actor-Critic Methods} $q_\pi(S_t, A_t) \approx R_{t+1} + \gamma \hat{v}(S_{t+1}, w) - \hat{v}(S_{t}, w)$
+
+\begin{algorithm}[H]
+Input: a differentiable policy parametrisation $\pi(a|s,\theta)$ \\
+Input: a differentiable state-value function parametrisation $\hat{v}(s,w)$ \\
+Parameters: step sizes $\alpha^\theta > 0, \alpha^w > 0$ \\
+Initialise policy parameter $\theta \in \mathbb{R}^{d'}$ and state-value weights $w \in \mathbb{R}^d$
+
+\While{forever (for each episode)}{
+Initialise $S$ (first state of episode); $I \leftarrow 1$ \\
+\While{S is not terminal (for each timestep)}{
+    $A \sim \pi(\cdot|S,\theta)$ \\
+    Take action $A$, observe $S', R$ \\
+    $\delta \leftarrow R + \gamma \hat{v}(S', w) - \hat{v}(S,w) \quad$ if $S'$ is terminal, then $\hat{v}(S', w) := 0$ \\
+    $w \leftarrow w + \alpha^w \delta \nabla \hat{v}(S,w)$ \\
+    $\theta \leftarrow \theta + \alpha^\theta I \delta \nabla \ln \pi(A|S,\theta)$ \\
+    $I \leftarrow \gamma I; S \leftarrow S'$
+}
+}
+\caption{Actor-Critic w/ TD(0)}
+\end{algorithm}
 
 
-$$\nabla \ln \pi(A_t | S_t, \theta_t) = \begin{cases}& x(s,a) - \sum_{a'} \pi(a' | s, \theta) x(s, a') \text{ if softmax policy } \\ & (a - \mu(s, \theta)) x(s)/\sigma^2 \text{ if Gaussian policy }\end{cases}$$
+
 
 \begin{center}
 \includegraphics[angle=90,width=1\linewidth]{./images/Tabular_Value_Function.png}
